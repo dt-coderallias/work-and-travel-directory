@@ -65,6 +65,21 @@ def rating_fields(entry: submission.Submission) -> None:
     )
 
 
+def numbers_fields(entry: submission.Submission) -> None:
+    """Optional, so a visitor who doesn't know the numbers can still submit."""
+    st.markdown("**The numbers** (optional)")
+    pay_column, hours_column, rent_column = st.columns(3)
+    entry.pay_rate = pay_column.text_input(
+        "Pay rate", key=field_key("exp_pay"), placeholder="e.g. $16/hr",
+    )
+    entry.avg_hours = hours_column.selectbox(
+        "Hours a week", config.HOURS_RANGES, index=None, placeholder="Choose", key=field_key("hours"),
+    ) or ""
+    entry.rent_per_week = rent_column.text_input(
+        "Rent a week", key=field_key("rent"), placeholder="e.g. $120",
+    )
+
+
 def period_fields(entry: submission.Submission) -> None:
     this_year = dt.date.today().year
     year = st.selectbox(
@@ -189,6 +204,7 @@ def show_form(frame) -> None:
             else:
                 st.html(render.step_heading_html(2, "Your experience"))
                 rating_fields(entry)
+                numbers_fields(entry)
                 period_fields(entry)
         with st.container(key="step_words"):
             words_section(entry)

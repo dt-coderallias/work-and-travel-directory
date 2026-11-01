@@ -43,6 +43,29 @@ def test_job_opportunities_have_no_overall_rating():
     assert submission.build_payload(entry, "t")["public"]["ratings"] == ""
 
 
+def test_pay_hours_and_rent_are_optional():
+    assert submission.missing_fields(report()) == []
+
+
+@pytest.mark.parametrize("kind", ["report", "review"])
+def test_pay_hours_and_rent_reach_the_public_payload(kind):
+    entry = report(submission_type=kind, pay_rate="$16/hr", avg_hours="35", rent_per_week="$120")
+    public = submission.build_payload(entry, "t")["public"]
+    assert public["pay_rate"] == "$16/hr"
+    assert public["avg_hours"] == "35"
+    assert public["rent_per_week"] == "$120"
+
+
+def test_job_opportunities_leave_the_structured_numbers_blank():
+    """Their pay rate stays inside the composed description, same as before."""
+    entry = report(submission_type="job_opportunity", pay_rate="$16", avg_hours="35", rent_per_week="$120")
+    public = submission.build_payload(entry, "t")["public"]
+    assert public["pay_rate"] == ""
+    assert public["avg_hours"] == ""
+    assert public["rent_per_week"] == ""
+    assert "Pay rate: $16" in public["report_description"]
+
+
 def test_complete_report_passes():
     assert submission.missing_fields(report()) == []
 

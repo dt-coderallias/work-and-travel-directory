@@ -65,6 +65,19 @@ def experience_html(record) -> str:
     return f'<p class="experience"><span class="badge badge-{experience}">{html.escape(label)}</span></p>'
 
 
+def facts_html(record) -> str:
+    """Pay, hours and rent, as the writer gave them. Shown only when at least one is filled in."""
+    parts = []
+    if record.get("pay_rate"):
+        parts.append(f"Pay {record['pay_rate']}")
+    if record.get("avg_hours"):
+        parts.append(f"{record['avg_hours']} hours a week")
+    if record.get("rent_per_week"):
+        parts.append(f"Rent {record['rent_per_week']} a week")
+    text = " · ".join(html.escape(part) for part in parts)
+    return f'<p class="facts">{text}</p>' if text else ""
+
+
 def stars_html(record) -> str:
     items = []
     for name, value in parse_ratings(record["ratings"]):
@@ -112,6 +125,7 @@ def card_html(record, linked: bool = True) -> str:
         f'<div class="record-head"><h3>{html.escape(record["employer_name"])}</h3>{badge_html(record)}</div>'
         f"{meta_html(record)}"
         f"{experience_html(record)}"
+        f"{facts_html(record)}"
         f'<p class="excerpt">{html.escape(excerpt(record["report_description"]))}</p>'
         f"{stars_html(record)}"
         f"{topic_tags_html(record)}"
@@ -134,6 +148,7 @@ def detail_html(record) -> str:
         f'<div class="record-head"><h3>{html.escape(record["employer_name"])}</h3>{badge_html(record)}</div>'
         f"{meta_html(record)}"
         f"{experience_html(record)}"
+        f"{facts_html(record)}"
         f'<div class="full-text">{paragraphs_html(record["report_description"])}</div>'
         f"{stars_html(record)}"
         f"{footnote_html(record)}"

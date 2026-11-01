@@ -86,3 +86,4 @@ This repository is public, so check that `git ls-files` lists nothing under `dat
 | `Code.gs` | Paste the new code, then **Deploy**, **Manage deployments**, edit, **New version**. The URL stays the same. |
 | Token | Change `SUBMIT_TOKEN` under **Project Settings**, **Script properties**, then update it in Streamlit secrets and in `Settings`. |
 | Site name or star categories | Edit `directory/config.py` and push. |
+| A new public column | Add the name to `PUBLIC_COLUMNS` in both `directory/config.py` and `google/Code.gs`, keeping the two lists in the same order. First add a matching column to every live tab that uses `PUBLIC_COLUMNS`: append it to `Directory - Public`, and insert it just before `original_details` in `Submissions` and just before `removed_at` in `Removed`. Then redeploy `Code.gs` straight away as a new version (see above). The back end copies rows by position, so the wrong order can put private text on the public sheet. |

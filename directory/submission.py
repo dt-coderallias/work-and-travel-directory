@@ -31,6 +31,8 @@ class Submission:
     city: str = ""
     position: str = ""
     overall: str = ""
+    avg_hours: str = ""
+    rent_per_week: str = ""
     stars: dict[str, int | None] = field(default_factory=dict)
     chips: list[str] = field(default_factory=list)
     year: str = ""
@@ -117,6 +119,9 @@ def build_payload(entry: Submission, token: str) -> dict:
             "position": clean(entry.position),
             "report_description": mask_contacts(compose_description(entry)),
             "ratings": ratings_text(entry.stars, entry.overall),
+            "pay_rate": clean(entry.pay_rate) if entry.submission_type != "job_opportunity" else "",
+            "avg_hours": clean(entry.avg_hours) if entry.submission_type != "job_opportunity" else "",
+            "rent_per_week": clean(entry.rent_per_week) if entry.submission_type != "job_opportunity" else "",
             "experience_period": entry.year,
             "submission_type": entry.submission_type,
             "date_reported": today,

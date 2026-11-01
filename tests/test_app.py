@@ -342,6 +342,42 @@ def test_job_opportunity_hides_stars(form):
     assert "Choose good, neutral or bad." not in page_html(form)
 
 
+def text_input_keys(app):
+    return [str(widget.key) for widget in app.text_input]
+
+
+def test_job_opportunity_has_no_numbers_section(form):
+    form.button_group(key=key_of(form, "type")).set_value("job_opportunity").run()
+    assert not any("The numbers" in m.value for m in form.markdown)
+    assert key_of(form, "exp_pay") not in text_input_keys(form)
+
+
+@pytest.mark.parametrize("kind", ["report", "review"])
+def test_numbers_fields_appear_for_reports_and_reviews(form, kind):
+    form.button_group(key=key_of(form, "type")).set_value(kind).run()
+    assert any("The numbers" in m.value for m in form.markdown)
+    keys = text_input_keys(form)
+    assert key_of(form, "exp_pay") in keys
+    assert key_of(form, "rent") in keys
+    assert form.selectbox(key=key_of(form, "hours")).options == config.HOURS_RANGES
+
+
+def test_numbers_are_optional(form):
+    form.button_group(key=key_of(form, "type")).set_value("report").run()
+    assert "numbers" not in " ".join(e.value for e in form.error).lower()
+
+
+def test_numbers_appear_in_the_preview(form):
+    form.button_group(key=key_of(form, "type")).set_value("report").run()
+    form.text_input(key=key_of(form, "exp_pay")).input("$16/hr").run()
+    form.selectbox(key=key_of(form, "hours")).select("30 to 34").run()
+    form.text_input(key=key_of(form, "rent")).input("$120").run()
+    html = page_html(form)
+    assert "Pay $16/hr" in html
+    assert "30 to 34 hours a week" in html
+    assert "Rent $120 a week" in html
+
+
 def chips_on_offer(app, overall):
     options = app.button_group(key=key_of(app, f"chips_{overall}")).proto.options
     return [option.content for option in options]
@@ -402,6 +438,27 @@ def test_successful_submission_confirms_and_resets(form, monkeypatch):
     assert sent[0]["public"]["ratings"] == "Overall=bad"
     assert sent[0]["token"] == "test-token"
     assert form.session_state["form_version"] == 1
+
+
+def test_pay_hours_and_rent_reach_the_payload(form, monkeypatch):
+    class Reply:
+        def raise_for_status(self):
+            pass
+
+        def json(self):
+            return {"ok": True, "status": "Live"}
+
+    sent = []
+    monkeypatch.setattr(requests, "post", lambda url, json, timeout: sent.append(json) or Reply())
+
+    fill_report(form)
+    form.text_input(key=key_of(form, "exp_pay")).input("$16/hr").run()
+    form.selectbox(key=key_of(form, "hours")).select("30 to 34").run()
+    form.text_input(key=key_of(form, "rent")).input("$120").run()
+    button(form, key_of(form, "send")).click().run()
+    assert sent[0]["public"]["pay_rate"] == "$16/hr"
+    assert sent[0]["public"]["avg_hours"] == "30 to 34"
+    assert sent[0]["public"]["rent_per_week"] == "$120"
 
 
 def test_held_submission_says_it_is_waiting(form, monkeypatch):

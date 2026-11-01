@@ -36,7 +36,7 @@ SAMPLE_RECORDS = [
     record("T-0003", "Pine Lodge", state="Idaho", city="McCall", position="Housekeeping",
            report_description="Taxi is $12 each, and $12 back again.",
            ratings="Overall=bad;Pay=2;Hours=1", review_state="unreviewed", date_reported="2026-06-01",
-           source=config.SOURCE_FORM),
+           source=config.SOURCE_FORM, pay_rate="$9/hr", avg_hours="20", rent_per_week="$45"),
     record("T-0004", "Global Parks", state=config.MULTIPLE_STATES, position=config.ALL_POSITIONS,
            report_description="Second job is hard to find."),
     record("T-0005", "Harbor Hotel", state="Texas", city="Corpus Christi / Port Aransas",

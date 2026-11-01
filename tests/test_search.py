@@ -27,6 +27,7 @@ def test_no_filters_returns_everything(frame):
     ("housekeeping", ["T-0003"]),
     ("mccall", ["T-0003"]),
     ("harbor corpus", ["T-0005"]),
+    ("9/hr", ["T-0003"]),
 ])
 def test_query(frame, query, expected):
     assert ids(search.apply_filters(frame, query=query)) == expected
@@ -96,14 +97,12 @@ def test_city_options_follow_state_and_split_pairs(frame):
 
 
 def test_employer_options_leave_out_placeholders():
-    frame = data.parse_directory(
-        "record_id,employer_name,entity_type,state,city,position,report_description,ratings,"
-        "experience_period,submission_type,date_reported,last_updated,verification_status,"
-        "review_state,source\n"
-        "1,Acme,,,,,text one,,,,,,,,\n"
-        f"2,{config.EMPLOYER_NOT_NAMED},,,,,text two,,,,,,,,\n"
-        "3,Town (area-wide comment),,,,,text three,,,,,,,,\n"
-    )
+    rows = [
+        record("1", "Acme", report_description="text one"),
+        record("2", config.EMPLOYER_NOT_NAMED, report_description="text two"),
+        record("3", "Town (area-wide comment)", report_description="text three"),
+    ]
+    frame = data.parse_directory(to_csv(rows))
     assert search.employer_options(frame) == ["Acme"]
 
 

@@ -20,7 +20,10 @@ from directory.text import employer_key, mask_contacts
 
 logger = logging.getLogger(__name__)
 
-MASKED_COLUMNS = ["employer_name", "city", "position", "report_description"]
+MASKED_COLUMNS = [
+    "employer_name", "city", "position", "report_description",
+    "pay_rate", "avg_hours", "rent_per_week",
+]
 
 
 class DataSourceError(Exception):
@@ -79,11 +82,12 @@ def parse_directory(text: str) -> pd.DataFrame:
     except (pd.errors.ParserError, pd.errors.EmptyDataError) as error:
         raise DataSourceError("Source is not readable as CSV") from error
 
-    missing = [column for column in config.PUBLIC_COLUMNS if column not in raw.columns]
+    required = [column for column in config.PUBLIC_COLUMNS if column not in config.OPTIONAL_COLUMNS]
+    missing = [column for column in required if column not in raw.columns]
     if missing:
         raise DataSourceError(f"Source is missing columns: {missing}")
 
-    frame = raw[config.PUBLIC_COLUMNS].astype(object)
+    frame = raw.reindex(columns=config.PUBLIC_COLUMNS, fill_value="").astype(object)
     for column in config.PUBLIC_COLUMNS:
         frame[column] = frame[column].map(lambda value: str(value).strip())
 
@@ -117,7 +121,8 @@ def parse_directory(text: str) -> pd.DataFrame:
     )
     frame["search_text"] = (
         frame["employer_name"] + " " + frame["employer_key"] + " " + frame["position"] + " "
-        + frame["city"] + " " + frame["state"] + " " + frame["report_description"]
+        + frame["city"] + " " + frame["state"] + " " + frame["report_description"] + " "
+        + frame["pay_rate"] + " " + frame["avg_hours"] + " " + frame["rent_per_week"]
     ).str.lower()
 
     ordered = frame.sort_values(

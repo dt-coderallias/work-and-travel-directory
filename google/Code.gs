@@ -11,6 +11,7 @@ const PUBLIC_COLUMNS = [
   'record_id', 'employer_name', 'entity_type', 'state', 'city', 'position',
   'report_description', 'ratings', 'experience_period', 'submission_type',
   'date_reported', 'last_updated', 'verification_status', 'review_state', 'source',
+  'pay_rate', 'avg_hours', 'rent_per_week',
 ];
 const SUBMISSION_COLUMNS = ['received_at', ...PUBLIC_COLUMNS, 'original_details', 'contact'];
 const QUEUE_COLUMNS = [
@@ -22,7 +23,10 @@ const CORRECTION_COLUMNS = [
 ];
 const REMOVED_COLUMNS = [...PUBLIC_COLUMNS, 'removed_at', 'removed_status', 'reason'];
 // Free-text columns only. A date such as 2026-11-01 looks like a phone number.
-const MASKED_COLUMNS = ['employer_name', 'city', 'position', 'report_description'];
+const MASKED_COLUMNS = [
+  'employer_name', 'city', 'position', 'report_description',
+  'pay_rate', 'avg_hours', 'rent_per_week',
+];
 
 const TAB = {
   PUBLIC: 'Public Directory',

@@ -35,6 +35,14 @@ def test_missing_column_is_a_failure(sample_text):
         data.parse_directory(sample_text.replace("verification_status", "status"))
 
 
+def test_site_still_loads_before_the_optional_columns_are_added():
+    columns = [c for c in config.PUBLIC_COLUMNS if c not in config.OPTIONAL_COLUMNS]
+    frame = data.parse_directory(to_csv([record("T-1", "Acme")], columns))
+    assert frame.iloc[0]["pay_rate"] == ""
+    assert frame.iloc[0]["avg_hours"] == ""
+    assert frame.iloc[0]["rent_per_week"] == ""
+
+
 def test_records_missing_required_values_are_dropped():
     frame = data.parse_directory(to_csv([record("", "Acme"), record("T-2", "Beta")]))
     assert frame["record_id"].tolist() == ["T-2"]
@@ -109,7 +117,12 @@ def test_contacts_are_masked_on_load():
     assert "a@b.com" not in description
 
 
-@pytest.mark.parametrize("text", [
+def test_pay_rate_is_masked_on_load():
+    text = to_csv([record("T-1", "Acme", pay_rate="Text me 876-555-1234")])
+    assert "555-1234" not in data.parse_directory(text).iloc[0]["pay_rate"]
+
+
+@pytest.mark.parametrize("text", config.HOURS_RANGES + [
     "Rate was $13.25 an hour",
     "cut from 40 to 15 hrs/wk",
     "9am to 2 or 4pm",
@@ -289,6 +302,26 @@ def test_missing_date_shows_only_in_the_full_report(row):
     assert "Date not recorded" in render.detail_html(row)
     row["date_reported"] = "2026-06-01"
     assert "Reported 2026-06-01" in render.card_html(row)
+
+
+def test_no_facts_line_when_nothing_is_filled_in(row):
+    assert 'class="facts"' not in render.card_html(row)
+    assert 'class="facts"' not in render.detail_html(row)
+
+
+def test_facts_line_shows_whatever_was_given(row):
+    row["pay_rate"] = "$9/hr"
+    row["avg_hours"] = "20 to 24"
+    row["rent_per_week"] = ""
+    output = render.card_html(row)
+    assert "Pay $9/hr" in output
+    assert "20 to 24 hours a week" in output
+    assert "Rent" not in output
+
+
+def test_facts_line_is_escaped(row):
+    row["pay_rate"] = "<script>alert(1)</script>"
+    assert "<script" not in render.card_html(row)
 
 
 def test_card_prompt_is_left_out_of_the_form_preview(row):

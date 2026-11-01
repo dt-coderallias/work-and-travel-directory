@@ -31,8 +31,13 @@ PUBLIC_COLUMNS = [
     "verification_status",
     "review_state",
     "source",
+    "pay_rate",
+    "avg_hours",
+    "rent_per_week",
 ]
 REQUIRED_VALUES = ["record_id", "employer_name", "report_description"]
+# Blank if the sheet doesn't have them, so the site loads while they're being added.
+OPTIONAL_COLUMNS = ["pay_rate", "avg_hours", "rent_per_week"]
 
 MULTIPLE_STATES = "Multiple states"
 ALL_POSITIONS = "All positions"
@@ -152,6 +157,11 @@ GOOD_CHIPS = [
     "Overtime available", "Steady hours", "Good pay", "Fair tips", "Good housing",
     "Close to everything", "Second job allowed", "Treated with respect",
     "Fair management",
+]
+# Worded with "to" because Sheets can read 20-29 as a date.
+HOURS_RANGES = [
+    "20 to 24", "25 to 29", "30 to 34", "35 to 39", "40 to 44",
+    "45 to 49", "50 to 54", "55 to 59", "60 or more",
 ]
 COMMON_POSITIONS = [
     ALL_POSITIONS, "Housekeeping", "Server", "Line cook", "Food service",
