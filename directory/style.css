@@ -1,0 +1,85 @@
+@media (max-width: 640px) {
+  h1 {
+    font-size: 1.7rem !important;
+    line-height: 1.2 !important;
+  }
+
+  [data-testid="stMainBlockContainer"] {
+    padding-top: 3.5rem;
+  }
+}
+
+.record h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  line-height: 1.3;
+  margin: 0;
+  padding: 0;
+  overflow-wrap: anywhere;
+}
+
+.record-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.75rem;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.record .meta {
+  color: #4a5560;
+  font-size: 0.9rem;
+  margin: 0.3rem 0 0.5rem;
+}
+
+.record .excerpt,
+.record .full-text p {
+  line-height: 1.55;
+  margin: 0 0 0.6rem;
+  overflow-wrap: anywhere;
+}
+
+.record .footnote {
+  color: #4a5560;
+  font-size: 0.8rem;
+  margin: 0;
+}
+
+.record .explanation {
+  background: #eef1f2;
+  border-radius: 0.4rem;
+  color: #33404a;
+  font-size: 0.85rem;
+  margin: 0.75rem 0 0;
+  padding: 0.6rem 0.75rem;
+}
+
+.badge {
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.15rem 0.6rem;
+  white-space: nowrap;
+}
+
+.badge-community_reported { background: #e6edf2; color: #1f4257; }
+.badge-multiple_reports { background: #fbecd2; color: #6b4300; }
+.badge-verified { background: #dcefe2; color: #1c5232; }
+.badge-unverified { background: #ececec; color: #454545; }
+
+.ratings {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.15rem 1rem;
+  list-style: none;
+  margin: 0 0 0.5rem;
+  padding: 0;
+}
+
+.ratings li {
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.rating-name { color: #33404a; }
+.rating-stars { color: #8a5a00; letter-spacing: 0.05em; }

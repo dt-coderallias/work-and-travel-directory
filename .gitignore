@@ -1,0 +1,14 @@
+# Real data never enters Git. It lives in Google and on this machine.
+data/
+
+# Secrets
+.streamlit/secrets.toml
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Local Claude Code settings
+.claude/settings.local.json
