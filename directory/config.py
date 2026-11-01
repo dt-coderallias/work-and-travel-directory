@@ -98,6 +98,8 @@ VERIFICATION_LABELS = {
         "The origin or accuracy of this information is unknown.",
     ),
 }
+# Only these show a badge. The rest still explain a record in its full report.
+BADGED_STATUSES = ["multiple_reports", "verified"]
 
 SUBMISSION_TYPES = {
     "report": "Report",

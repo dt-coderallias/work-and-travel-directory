@@ -421,10 +421,8 @@
   white-space: nowrap;
 }
 
-.badge-community_reported { background: #e6edf2; color: #1f4257; }
 .badge-multiple_reports { background: #fbecd2; color: #6b4300; }
 .badge-verified { background: #dcefe2; color: #1c5232; }
-.badge-unverified { background: #ececec; color: #454545; }
 
 .record .experience {
   margin: 0 0 0.45rem;

@@ -208,9 +208,33 @@ def test_dollar_signs_stay_as_plain_text(row):
 
 def test_unknown_status_in_badge_is_safe(row):
     row["verification_status"] = '"><script>'
-    output = render.badge_html(row)
-    assert "script" not in output
-    assert "Not verified" in output
+    assert render.badge_html(row) == ""
+
+
+@pytest.mark.parametrize("status", ["community_reported", config.UNVERIFIED])
+def test_unchecked_records_show_no_badge(row, status):
+    row["verification_status"] = status
+    assert 'class="badge' not in render.card_html(row)
+    assert 'class="badge' not in render.detail_html(row)
+
+
+@pytest.mark.parametrize("status, label", [
+    ("multiple_reports", "Multiple reports"),
+    ("verified", "Independently verified"),
+])
+def test_only_these_statuses_show_a_badge(row, status, label):
+    row["verification_status"] = status
+    assert f'badge-{status}">{label}' in render.card_html(row)
+    assert f'badge-{status}">{label}' in render.detail_html(row)
+
+
+@pytest.mark.parametrize("status, sentence", [
+    ("community_reported", "It has not been independently checked."),
+    (config.UNVERIFIED, "The origin or accuracy of this information is unknown."),
+])
+def test_full_report_still_explains_records_with_no_badge(row, status, sentence):
+    row["verification_status"] = status
+    assert sentence in render.detail_html(row)
 
 
 @pytest.mark.parametrize("experience, label", [

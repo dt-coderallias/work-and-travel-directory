@@ -450,6 +450,14 @@ def test_information_pages_load(app, page, heading):
     assert app.title[0].value == heading
 
 
+def test_how_it_works_only_explains_badges_in_use(app):
+    app.switch_page("views/how_it_works.py").run()
+    assert "Multiple reports" in page_html(app)
+    assert "Independently verified" in page_html(app)
+    assert "Community-reported" not in page_html(app)
+    assert "Not verified" not in page_html(app)
+
+
 def test_correction_needs_a_problem_and_contact(app):
     app.switch_page("views/corrections.py").run()
     button(app, "cor0_send").click().run()

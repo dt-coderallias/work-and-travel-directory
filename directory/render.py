@@ -51,9 +51,10 @@ def status_label(status: str) -> tuple[str, str]:
 
 def badge_html(record) -> str:
     status = record["verification_status"]
-    known = status if status in config.VERIFICATION_LABELS else config.UNVERIFIED
+    if status not in config.BADGED_STATUSES:
+        return ""
     label, _ = status_label(status)
-    return f'<span class="badge badge-{known}">{html.escape(label)}</span>'
+    return f'<span class="badge badge-{status}">{html.escape(label)}</span>'
 
 
 def experience_html(record) -> str:
@@ -202,7 +203,8 @@ def tiles_html(tiles: list[tuple[str, str]], numbered: bool = False) -> str:
 
 def label_legend_html() -> str:
     items = []
-    for status, (label, explanation) in config.VERIFICATION_LABELS.items():
+    for status in config.BADGED_STATUSES:
+        label, explanation = status_label(status)
         items.append(
             f'<div class="tile"><span class="badge badge-{status}">{html.escape(label)}</span>'
             f"<p>{html.escape(explanation)}</p></div>"
