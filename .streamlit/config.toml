@@ -1,10 +1,28 @@
 [theme]
 base = "light"
-primaryColor = "#1f5c7a"
-backgroundColor = "#fafaf8"
-secondaryBackgroundColor = "#eef1f2"
-textColor = "#1f2933"
-font = "sans-serif"
+primaryColor = "#0b6e4f"
+backgroundColor = "#f6f4ec"
+secondaryBackgroundColor = "#ebe8dc"
+textColor = "#16241f"
+borderColor = "#e2dfd0"
+font = "Figtree, sans-serif"
+headingFont = "Bricolage Grotesque, Figtree, sans-serif"
+baseRadius = "12px"
+buttonRadius = "12px"
+
+# Fonts are served from this app, so no visitor data goes to a font provider.
+[[theme.fontFaces]]
+family = "Figtree"
+url = "app/static/fonts/figtree-latin-wght-normal.woff2"
+weight = "300 900"
+
+[[theme.fontFaces]]
+family = "Bricolage Grotesque"
+url = "app/static/fonts/bricolage-grotesque-latin-wght-normal.woff2"
+weight = "200 800"
+
+[server]
+enableStaticServing = true
 
 [client]
 showErrorDetails = false

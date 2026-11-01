@@ -16,6 +16,52 @@ def state_options(frame: pd.DataFrame) -> list[str]:
     return sorted(present)
 
 
+def state_choices(frame: pd.DataFrame) -> list[str]:
+    """Every state, so a map tile with no reports can still be chosen."""
+    return sorted(set(config.US_STATES) | set(state_options(frame)))
+
+
+def state_counts(frame: pd.DataFrame) -> dict[str, int]:
+    """Reports placed in each state.
+
+    Multi-state records are left out here, unlike in_state, or every state
+    would look reported.
+    """
+    counts = frame["state"].value_counts()
+    return {state: int(counts.get(state, 0)) for state in config.STATE_TILES}
+
+
+def topic_counts(frame: pd.DataFrame) -> dict[str, int]:
+    return {
+        topic: int(frame["topics"].map(lambda values: topic in values).sum())
+        for topic in config.TOPICS
+    }
+
+
+def experience_counts(frame: pd.DataFrame) -> dict[str, int]:
+    counts = frame["experience"].value_counts()
+    return {experience: int(counts.get(experience, 0)) for experience in config.EXPERIENCE_LABELS}
+
+
+def directory_stats(frame: pd.DataFrame) -> dict[str, int]:
+    return {
+        "reports": len(frame),
+        "employers": len(employer_options(frame)),
+        "states": len(state_options(frame)),
+    }
+
+
+def other_reports(frame: pd.DataFrame, record) -> pd.DataFrame:
+    """Other reports under the same employer name.
+
+    "Employer not named" is a placeholder, so those reports aren't related.
+    """
+    if record["employer_name"] == config.EMPLOYER_NOT_NAMED:
+        return frame.iloc[0:0]
+    same_name = frame["employer_key"] == record["employer_key"]
+    return frame[same_name & (frame["record_id"] != record["record_id"])]
+
+
 def split_cities(city: str) -> list[str]:
     return [part.strip() for part in city.split(" / ") if part.strip() and part.strip() != "All locations"]
 
@@ -70,8 +116,11 @@ def apply_filters(
     city: str | None = None,
     position_group: str | None = None,
     topics: list[str] | None = None,
+    experience: list[str] | None = None,
 ) -> pd.DataFrame:
     keep = matches_query(frame, query)
+    if experience:
+        keep &= frame["experience"].isin(experience)
     if state:
         keep &= in_state(frame, state)
     if city:

@@ -2,7 +2,21 @@ import datetime as dt
 
 import streamlit as st
 
-from directory import config, data, search, submission
+from directory import config, data, render, search, submission
+
+PREVIEW_NAME = "Employer name"
+PREVIEW_TEXT = "Your words will appear here."
+BEFORE_YOU_START = [
+    (
+        "It goes live straight away",
+        "What you add appears publicly as soon as you publish. Moderators read it afterwards.",
+    ),
+    ("Keep people out of it", "Please don't name individuals or include phone numbers."),
+    (
+        "Your contact stays private",
+        "Never published. Only used if we need to clarify your report.",
+    ),
+]
 
 
 def field_key(name: str) -> str:
@@ -24,17 +38,30 @@ def job_fields(entry: submission.Submission) -> None:
     entry.link = st.text_input("Link to the listing", key=field_key("link"))
 
 
+def chip_choices(overall: str) -> list[str]:
+    """A neutral experience can have both, and so can a form with no rating yet."""
+    chips = {"good": config.GOOD_CHIPS, "bad": config.ISSUE_CHIPS}
+    return chips.get(overall, config.GOOD_CHIPS + config.ISSUE_CHIPS)
+
+
 def rating_fields(entry: submission.Submission) -> None:
+    entry.overall = st.pills(
+        "How was it overall?",
+        config.OVERALL_CHOICES,
+        format_func=lambda overall: f"{config.EXPERIENCE_ICONS[overall]} {overall.capitalize()}",
+        key=field_key("overall"),
+    ) or ""
     categories = (
         config.AGENCY_RATINGS if entry.entity_type == "agency" else config.EMPLOYER_RATINGS
     )
     st.markdown("**Rate what you know** (5 stars is best)")
     entry.stars = {name: rating_row(name) for name in categories}
+    # Keyed by rating, so complaints already tapped don't carry over to a good review.
     entry.chips = st.pills(
         "What stood out?",
-        config.ISSUE_CHIPS,
+        chip_choices(entry.overall),
         selection_mode="multi",
-        key=field_key("chips"),
+        key=field_key(f"chips_{entry.overall}"),
     )
 
 
@@ -50,19 +77,26 @@ def period_fields(entry: submission.Submission) -> None:
     entry.year = str(year) if year else ""
 
 
-@st.fragment
-def show_form(frame) -> None:
-    entry = submission.Submission()
+def preview_record(entry: submission.Submission) -> dict:
+    """The record as it would be published, including contact masking."""
+    public = submission.build_payload(entry, "")["public"]
+    public["employer_name"] = public["employer_name"] or PREVIEW_NAME
+    if public["report_description"] == submission.STARS_ONLY_TEXT and not submission.has_rating(entry):
+        public["report_description"] = PREVIEW_TEXT
+    public["topics"] = data.matching_labels(public["report_description"], config.TOPICS)
+    public["experience"] = data.experience_of(public["ratings"], public["source"])
+    return public
 
-    entry.submission_type = st.pills(
-        "What are you adding?",
-        list(config.SUBMISSION_TYPES),
-        format_func=config.SUBMISSION_TYPES.get,
-        key=field_key("type"),
-    ) or ""
-    if not entry.submission_type:
-        return
 
+def show_preview(entry: submission.Submission) -> None:
+    st.subheader("How it will look", anchor=False)
+    st.html(render.card_html(preview_record(entry), linked=False))
+    st.caption("This appears publicly as soon as you publish.")
+    st.html(render.checklist_html(submission.missing_fields(entry)))
+
+
+def job_section(entry: submission.Submission, frame) -> None:
+    st.html(render.step_heading_html(1, "Who and where"))
     entry.entity_type = st.pills(
         "Is this about an employer or an agency?",
         list(config.ENTITY_TYPES),
@@ -107,17 +141,14 @@ def show_form(frame) -> None:
         key=field_key("position"),
     ) or ""
 
-    if entry.submission_type == "job_opportunity":
-        job_fields(entry)
-    else:
-        rating_fields(entry)
-        period_fields(entry)
 
+def words_section(entry: submission.Submission) -> None:
+    st.html(render.step_heading_html(3, "In your words"))
     optional = entry.submission_type == "review"
     entry.details = st.text_area(
         "Details (optional)" if optional else "Details",
         key=field_key("details"),
-        placeholder="What happened? Please don't name individuals or include phone numbers.",
+        placeholder="What was it like? Please don't name individuals or include phone numbers.",
     )
     entry.contact = st.text_input(
         "Contact (optional)",
@@ -130,8 +161,42 @@ def show_form(frame) -> None:
         key=field_key("declared"),
     )
 
-    if st.button("Publish", type="primary", key=field_key("send")):
-        submit(entry)
+
+@st.fragment
+def show_form(frame) -> None:
+    entry = submission.Submission()
+
+    with st.container(key="type_picker"):
+        entry.submission_type = st.pills(
+            "What are you adding?",
+            list(config.SUBMISSION_TYPES),
+            format_func=lambda kind: f"{config.SUBMISSION_ICONS[kind]} {config.SUBMISSION_TYPES[kind]}",
+            key=field_key("type"),
+            width="stretch",
+        ) or ""
+    if not entry.submission_type:
+        st.html(render.tiles_html(BEFORE_YOU_START))
+        return
+
+    form_column, preview_column = st.columns([7, 5], gap="large")
+    with form_column:
+        with st.container(key="step_job"):
+            job_section(entry, frame)
+        with st.container(key="step_detail"):
+            if entry.submission_type == "job_opportunity":
+                st.html(render.step_heading_html(2, "About the job"))
+                job_fields(entry)
+            else:
+                st.html(render.step_heading_html(2, "Your experience"))
+                rating_fields(entry)
+                period_fields(entry)
+        with st.container(key="step_words"):
+            words_section(entry)
+        if st.button("Publish", type="primary", key=field_key("send"), width="stretch"):
+            submit(entry)
+
+    with preview_column, st.container(key="preview"):
+        show_preview(entry)
 
 
 def submit(entry: submission.Submission) -> None:
@@ -167,8 +232,7 @@ def show_receipt() -> None:
         st.success(f"Thank you. Your report on {receipt['name']} will appear in about 10 minutes.")
 
 
-st.title("Add information")
-st.write("No account needed. Most of this is a few taps.")
+render.page_band("Add information", "No account needed. Most of this is a few taps.")
 show_receipt()
 
 result = data.load_directory()

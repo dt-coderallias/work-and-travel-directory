@@ -1,5 +1,6 @@
 import pytest
 
+from conftest import record, to_csv
 from directory import config, data, search
 
 
@@ -56,6 +57,21 @@ def test_topics_must_all_match(frame):
     assert "T-0002" not in ids(search.apply_filters(frame, topics=["Hours", "Housing"]))
 
 
+def test_experience_filter_separates_ratings_from_the_list(frame):
+    assert ids(search.apply_filters(frame, experience=["bad"])) == ["T-0003"]
+    assert "T-0003" not in ids(search.apply_filters(frame, experience=[config.FROM_LIST]))
+    assert search.apply_filters(frame, experience=["good"]).empty
+
+
+def test_choosing_several_experiences_widens_the_results(frame):
+    results = search.apply_filters(frame, experience=["bad", config.FROM_LIST])
+    assert len(results) == len(frame)
+
+
+def test_experience_counts_cover_every_marker(frame):
+    assert search.experience_counts(frame) == {"good": 0, "neutral": 0, "bad": 1, config.FROM_LIST: 4}
+
+
 def test_filters_combine(frame):
     results = search.apply_filters(
         frame, query="hotel", state="Texas", position_group="Front desk", topics=["Hours"],
@@ -101,6 +117,59 @@ def test_form_options_work_with_no_directory():
     assert search.employer_options(search.EMPTY_FRAME) == []
     assert search.city_options(search.EMPTY_FRAME, "Texas") == []
     assert search.form_position_options(search.EMPTY_FRAME) == config.COMMON_POSITIONS
+
+
+def test_state_tiles_cover_every_state_once():
+    assert set(config.STATE_TILES) == set(config.US_STATES)
+    positions = [(row, column) for _, row, column in config.STATE_TILES.values()]
+    assert len(set(positions)) == len(positions)
+
+
+def test_state_counts_leave_out_multiple_state_and_blank_records(frame):
+    counts = search.state_counts(frame)
+    assert counts["Idaho"] == (frame["state"] == "Idaho").sum()
+    assert sum(counts.values()) == frame["state"].isin(config.US_STATES).sum()
+    assert config.MULTIPLE_STATES not in counts
+
+
+def test_topic_counts_follow_the_frame_they_are_given(frame):
+    everything = search.topic_counts(frame)
+    narrowed = search.topic_counts(search.apply_filters(frame, topics=["Housing"]))
+    assert narrowed["Housing"] == everything["Housing"] > 0
+    assert sum(narrowed.values()) <= sum(everything.values())
+
+
+def test_directory_stats_leave_out_placeholders():
+    rows = [
+        record("T-1", "Acme", state="Texas"),
+        record("T-2", config.EMPLOYER_NOT_NAMED, state=config.MULTIPLE_STATES),
+    ]
+    stats = search.directory_stats(data.parse_directory(to_csv(rows)))
+    assert stats == {"reports": 2, "employers": 1, "states": 1}
+
+
+def test_state_choices_include_states_with_no_reports(frame):
+    assert "Nebraska" not in search.state_options(frame)
+    assert "Nebraska" in search.state_choices(frame)
+
+
+def test_other_reports_share_a_name_but_not_a_record():
+    rows = [
+        record("T-1", "Acme Hotel"), record("T-2", "ACME hotel", report_description="Another account"),
+        record("T-3", "Pine Lodge"),
+    ]
+    frame = data.parse_directory(to_csv(rows))
+    first = frame[frame["record_id"] == "T-1"].iloc[0]
+    assert search.other_reports(frame, first)["record_id"].tolist() == ["T-2"]
+
+
+def test_employer_not_named_reports_are_not_related():
+    rows = [
+        record("T-1", config.EMPLOYER_NOT_NAMED),
+        record("T-2", config.EMPLOYER_NOT_NAMED, report_description="A different account"),
+    ]
+    frame = data.parse_directory(to_csv(rows))
+    assert search.other_reports(frame, frame.iloc[0]).empty
 
 
 def test_suggest_finds_a_close_employer(frame):

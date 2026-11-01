@@ -1,13 +1,13 @@
 import pytest
 import requests
 
-from directory import config, submission
+from directory import config, data, submission
 from directory.submission import Submission
 
 
 def report(**values):
     base = dict(
-        submission_type="report", name="Acme", state="Ohio",
+        submission_type="report", name="Acme", state="Ohio", overall="bad",
         details="They cut everyone's hours in June.", declared=True,
     )
     return Submission(**{**base, **values})
@@ -19,6 +19,28 @@ def test_stars_convert_to_one_through_five():
 
 def test_no_stars_gives_blank_ratings():
     assert submission.ratings_text({"Pay": None}) == ""
+
+
+def test_overall_rating_comes_before_the_stars():
+    assert submission.ratings_text({"Pay": 3}, "good") == "Overall=good;Pay=4"
+
+
+@pytest.mark.parametrize("overall", config.OVERALL_CHOICES)
+def test_overall_reaches_the_public_record_as_a_marker(overall):
+    public = submission.build_payload(report(overall=overall), "t")["public"]
+    assert data.experience_of(public["ratings"], public["source"]) == overall
+
+
+@pytest.mark.parametrize("kind", ["report", "review"])
+def test_experiences_must_say_how_it_went(kind):
+    problems = submission.missing_fields(report(submission_type=kind, overall=""))
+    assert "Choose good, neutral or bad." in problems
+
+
+def test_job_opportunities_have_no_overall_rating():
+    entry = report(submission_type="job_opportunity", overall="")
+    assert submission.missing_fields(entry) == []
+    assert submission.build_payload(entry, "t")["public"]["ratings"] == ""
 
 
 def test_complete_report_passes():
@@ -57,7 +79,7 @@ def test_job_opportunity_needs_details():
 
 def test_description_includes_chips_and_words():
     text = submission.compose_description(report(chips=["Low pay", "Hours cut"]))
-    assert text.startswith("Issues selected: Low pay, Hours cut.")
+    assert text.startswith("What stood out: Low pay, Hours cut.")
     assert "cut everyone's hours" in text
 
 

@@ -1,42 +1,60 @@
 import streamlit as st
 
-from directory import config
+from directory import config, render
 
-st.title("How it works")
+STEPS = [
+    (
+        "Someone reports",
+        "Reports are written by people who have taken part in J-1 Work & Travel programs or "
+        "have experience with employers and agencies.",
+    ),
+    ("It goes live", "New reports go live automatically."),
+    (
+        "Moderators read it",
+        "A report marked \"Not yet reviewed by a moderator\" hasn't been read yet.",
+    ),
+    ("It can be changed", "Moderators can correct or remove a report."),
+]
 
-st.header("Where the information comes from")
-st.write(
-    "Reports are written by people who have taken part in J-1 Work & Travel programs or have "
-    "experience with employers and agencies. The first entries come from a spreadsheet shared "
-    "in the community in 2026. New reports are added by visitors."
-)
+DETAILS = [
+    (
+        "Where the information comes from",
+        f"The data for the first entries was pulled from the {config.LIST_NAME} list, a "
+        "spreadsheet shared in the community in 2026. It has no ratings. "
+        "New reports are added by visitors.",
+    ),
+    (
+        "Good, neutral or bad",
+        "Everyone adding an experience says how it went overall, so a name in this directory "
+        "isn't automatically a complaint. That rating is one person's view of one job, not ours.",
+    ),
+    (
+        "Star ratings",
+        "Stars show what one person gave on one report. We don't calculate averages, overall "
+        "scores or rankings, because a few anonymous ratings aren't a fair verdict on anyone.",
+    ),
+    (
+        "Moderation",
+        "Moderators remove personal details such as names and phone numbers, and material that "
+        "is malicious, discriminatory, or plainly unsupported. Text they take out is marked "
+        f"{config.REDACTION_MARKER}. Otherwise, reports keep the writer's own words.",
+    ),
+]
 
-st.header("Reports appear straight away")
-st.write(
-    "New reports go live automatically. Moderators read them afterwards and can correct or "
-    "remove them. A report marked \"Not yet reviewed by a moderator\" hasn't been read yet."
-)
+render.page_band("How it works", "From a report being written to what happens if it's wrong.")
 
-st.header("What the labels mean")
-for label, explanation in config.VERIFICATION_LABELS.values():
-    st.markdown(f"**{label}:** {explanation}")
+st.subheader("Reports appear straight away", anchor=False)
+st.html(render.tiles_html(STEPS, numbered=True))
+
+st.subheader("What the labels mean", anchor=False)
+st.html(render.label_legend_html())
 st.write(
     "A report in this directory is someone's account or allegation. It is not a finding that "
     "an employer has done anything wrong, unless it is marked as independently verified. "
     "Having no reports does not mean an employer is fine."
 )
 
-st.header("Star ratings")
-st.write(
-    "Stars show what one person gave on one report. We don't calculate averages, overall "
-    "scores or rankings, because a few anonymous ratings aren't a fair verdict on anyone."
-)
-
-st.header("Moderation")
-st.write(
-    "Moderators remove personal details such as names and phone numbers, and material that is "
-    "malicious, discriminatory, or plainly unsupported. Text they take out is marked "
-    f"{config.REDACTION_MARKER}. Otherwise, reports keep the writer's own words."
-)
+st.subheader("The details", anchor=False)
+st.html(render.tiles_html(DETAILS))
 if st.button("See something wrong? Request a correction"):
     st.switch_page("views/corrections.py")

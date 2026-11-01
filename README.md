@@ -24,14 +24,15 @@ The Streamlit app reads one published CSV and holds no Google credential, so it 
 ```
 app.py                  page router
 views/                  one file per page
-directory/              config, data loading, search, rendering, submissions
+directory/              config, data loading, search, rendering, submissions, styles
+static/fonts/           self-hosted fonts, so no visitor data goes to a font provider
 google/Code.gs          the Apps Script back end
 scripts/                one-time data import
 tests/                  Python and Apps Script tests, using synthetic data
 data/                   real data, never committed
 ```
 
-The name, tagline, operator name, star categories and issue chips are all in `directory/config.py`.
+The name, headline, tagline, operator name, star categories and issue chips are all in `directory/config.py`. Colours are at the top of `directory/style.css` and in `.streamlit/config.toml`.
 
 ## Run it locally
 

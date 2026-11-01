@@ -30,6 +30,7 @@ class Submission:
     state: str = ""
     city: str = ""
     position: str = ""
+    overall: str = ""
     stars: dict[str, int | None] = field(default_factory=dict)
     chips: list[str] = field(default_factory=list)
     year: str = ""
@@ -46,9 +47,11 @@ def clean(value: str | None) -> str:
     return (value or "").strip()
 
 
-def ratings_text(stars: dict[str, int | None]) -> str:
-    """st.feedback gives 0-4, or None when unrated. Store as 1-5."""
-    return ";".join(f"{name}={value + 1}" for name, value in stars.items() if value is not None)
+def ratings_text(stars: dict[str, int | None], overall: str = "") -> str:
+    """st.feedback gives 0-4, or None when unrated. Store as 1-5, after any overall rating."""
+    parts = [f"{config.OVERALL_RATING}={overall}"] if overall else []
+    parts += [f"{name}={value + 1}" for name, value in stars.items() if value is not None]
+    return ";".join(parts)
 
 
 def has_rating(entry: Submission) -> bool:
@@ -64,6 +67,9 @@ def missing_fields(entry: Submission) -> list[str]:
         problems.append("Enter the employer or agency name.")
     if not clean(entry.state):
         problems.append("Choose a state.")
+
+    if entry.submission_type in ("report", "review") and not entry.overall:
+        problems.append("Choose good, neutral or bad.")
 
     written = len(clean(entry.details)) >= MIN_DETAIL_LENGTH
     if entry.submission_type == "review":
@@ -81,7 +87,7 @@ def compose_description(entry: Submission) -> str:
     """Public text: the visitor's words, plus anything they tapped."""
     parts = []
     if entry.chips:
-        parts.append("Issues selected: " + ", ".join(entry.chips) + ".")
+        parts.append("What stood out: " + ", ".join(entry.chips) + ".")
     if entry.submission_type == "job_opportunity":
         job_fields = [
             ("Pay rate", entry.pay_rate), ("Housing", entry.housing),
@@ -110,7 +116,7 @@ def build_payload(entry: Submission, token: str) -> dict:
             "city": clean(entry.city),
             "position": clean(entry.position),
             "report_description": mask_contacts(compose_description(entry)),
-            "ratings": ratings_text(entry.stars),
+            "ratings": ratings_text(entry.stars, entry.overall),
             "experience_period": entry.year,
             "submission_type": entry.submission_type,
             "date_reported": today,

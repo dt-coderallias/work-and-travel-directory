@@ -50,6 +50,41 @@ def test_identical_reports_are_dropped_but_other_employers_are_kept():
     assert data.parse_directory(to_csv(rows))["record_id"].tolist() == ["T-1", "T-3"]
 
 
+def test_reviews_with_no_words_survive_when_their_ratings_differ():
+    rows = [
+        record("T-1", "Acme", report_description="Rated.", ratings="Overall=good"),
+        record("T-2", "Acme", report_description="Rated.", ratings="Overall=bad"),
+    ]
+    assert data.parse_directory(to_csv(rows))["record_id"].tolist() == ["T-1", "T-2"]
+
+
+@pytest.mark.parametrize("ratings, source, expected", [
+    ("Overall=good;Pay=4", config.SOURCE_FORM, "good"),
+    ("Overall=neutral", config.SOURCE_FORM, "neutral"),
+    ("Pay=4;Overall=bad", config.SOURCE_FORM, "bad"),
+    (" Overall = Good ", config.SOURCE_FORM, "good"),
+    ("", config.SOURCE_LEGACY, config.FROM_LIST),
+    ("Overall=bad", config.SOURCE_LEGACY, "bad"),
+    ("", config.SOURCE_FORM, ""),
+    ("Pay=4", config.SOURCE_FORM, ""),
+    ("Overall=terrible", config.SOURCE_FORM, ""),
+    ("Overall=<b>", config.SOURCE_FORM, ""),
+])
+def test_experience_of(ratings, source, expected):
+    assert data.experience_of(ratings, source) == expected
+
+
+def test_every_record_gets_its_experience(sample_text):
+    frame = data.parse_directory(sample_text)
+    markers = dict(zip(frame["record_id"], frame["experience"]))
+    assert markers["T-0003"] == "bad"
+    assert markers["T-0001"] == config.FROM_LIST
+
+
+def test_a_source_with_only_a_header_still_loads():
+    assert data.parse_directory(to_csv([])).empty
+
+
 @pytest.mark.parametrize("status", ["", "confirmed", "VERIFIED", "verified!"])
 def test_unknown_status_shows_the_lowest_label(status):
     frame = data.parse_directory(to_csv([record("T-1", "Acme", verification_status=status)]))
@@ -143,6 +178,7 @@ def test_refresh_is_limited_to_once_per_cooldown():
     ("Pay=9;Hours=0", []),
     ("Pay=two;=3;junk", []),
     ("", []),
+    ("Overall=good;Pay=4", [("Pay", 4)]),
 ])
 def test_parse_ratings(ratings, expected):
     assert render.parse_ratings(ratings) == expected
@@ -177,16 +213,86 @@ def test_unknown_status_in_badge_is_safe(row):
     assert "Not verified" in output
 
 
+@pytest.mark.parametrize("experience, label", [
+    ("good", "Good experience"),
+    ("neutral", "Neutral experience"),
+    ("bad", "Bad experience"),
+])
+def test_rating_badge_appears_on_card_and_full_report(row, experience, label):
+    row["experience"] = experience
+    assert f'badge-{experience}">{label}' in render.card_html(row)
+    assert f'badge-{experience}">{label}' in render.detail_html(row)
+
+
+def test_no_marker_for_a_record_without_one(row):
+    assert 'class="experience"' not in render.card_html(row)
+    row["experience"] = '"><script>'
+    assert "script" not in render.card_html(row)
+
+
+def test_list_records_only_mention_where_the_data_was_pulled_from(row):
+    row["experience"] = config.FROM_LIST
+    for output in (render.card_html(row), render.detail_html(row)):
+        assert "Data pulled from the Jobs to Avoid list" in output
+        assert 'class="experience"' not in output
+
+
+def test_list_wording_never_passes_judgement():
+    wording = " ".join(config.EXPERIENCE_LABELS[config.FROM_LIST]).lower()
+    assert "complaint" not in wording
+    assert "marked" not in wording
+
+
+def test_full_report_says_what_the_list_is(row):
+    row["experience"] = config.FROM_LIST
+    assert "a spreadsheet shared in the community in 2026" in render.detail_html(row)
+
+
+def test_full_report_says_a_rating_is_the_writers_view(row):
+    row["experience"] = "bad"
+    assert "isn&#x27;t the directory&#x27;s view" in render.detail_html(row)
+
+
 def test_card_shows_review_note_only_when_unreviewed(row):
     assert "Not yet reviewed" not in render.card_html(row)
     row["review_state"] = "unreviewed"
     assert "Not yet reviewed" in render.card_html(row)
 
 
-def test_card_shows_missing_date_plainly(row):
-    assert "Date not recorded" in render.card_html(row)
+def test_missing_date_shows_only_in_the_full_report(row):
+    assert "Date not recorded" not in render.card_html(row)
+    assert "Date not recorded" in render.detail_html(row)
     row["date_reported"] = "2026-06-01"
     assert "Reported 2026-06-01" in render.card_html(row)
+
+
+def test_card_prompt_is_left_out_of_the_form_preview(row):
+    assert "Read full report" in render.card_html(row)
+    assert "Read full report" not in render.card_html(row, linked=False)
+
+
+def test_topic_tags_appear_on_the_card(row):
+    assert 'class="tags"' not in render.card_html(row)
+    tagged = {**row.to_dict(), "topics": ["Housing", "Pay"]}
+    assert render.card_html(tagged).count('class="tag"') == 2
+
+
+@pytest.mark.parametrize("count, highest, level", [
+    (0, 10, 0), (1, 10, 1), (5, 10, 2), (10, 10, 4), (1, 1, 1),
+])
+def test_tile_level_scales_to_the_busiest_state(count, highest, level):
+    assert render.tile_level(count, highest) == level
+
+
+def test_selected_tile_overrides_its_shade():
+    counts = dict.fromkeys(config.STATE_TILES, 0)
+    css = render.state_map_css(counts, "Texas")
+    assert "--tile: var(--tile-selected)" in css
+    assert css.count("grid-area") == len(config.STATE_TILES)
+
+
+def test_state_split_escapes_the_state_name():
+    assert "<b>" not in render.state_split_html("<b>Texas</b>", 2, 1)
 
 
 def test_excerpt_cuts_on_a_word():

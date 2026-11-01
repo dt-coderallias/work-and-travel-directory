@@ -58,6 +58,15 @@ def matching_labels(text: str, patterns: dict[str, str]) -> list[str]:
     return [label for label, pattern in patterns.items() if re.search(pattern, text, re.IGNORECASE)]
 
 
+def experience_of(ratings: str, source: str) -> str:
+    """The record's key in config.EXPERIENCE_LABELS, or "" if it has no marker."""
+    for part in str(ratings).split(";"):
+        name, _, value = part.partition("=")
+        if name.strip() == config.OVERALL_RATING and value.strip().lower() in config.OVERALL_CHOICES:
+            return value.strip().lower()
+    return config.FROM_LIST if source == config.SOURCE_LEGACY else ""
+
+
 def parse_directory(text: str) -> pd.DataFrame:
     """Turn CSV text into validated records, or raise DataSourceError.
 
@@ -88,14 +97,18 @@ def parse_directory(text: str) -> pd.DataFrame:
 
     frame["employer_key"] = frame["employer_name"].map(employer_key)
     frame = frame.drop_duplicates(subset="record_id", keep="first")
+    # Ratings count, because reviews with no written words all share the same text.
     frame = frame.drop_duplicates(
-        subset=["employer_key", "state", "city", "report_description"], keep="first"
+        subset=["employer_key", "state", "city", "report_description", "ratings"], keep="first"
     )
 
     known = frame["verification_status"].isin(config.VERIFICATION_LABELS)
     frame.loc[~known, "verification_status"] = config.UNVERIFIED
     frame.loc[frame["review_state"] != "reviewed", "review_state"] = "unreviewed"
 
+    frame["experience"] = [
+        experience_of(ratings, source) for ratings, source in zip(frame["ratings"], frame["source"])
+    ]
     frame["position_groups"] = frame["position"].map(
         lambda position: matching_labels(position, config.POSITION_GROUPS)
     )

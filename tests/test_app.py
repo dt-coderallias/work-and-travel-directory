@@ -43,7 +43,7 @@ def app(sample_path):
 
 def test_home_shows_all_records(app):
     assert report_count(app) == f"{len(SAMPLE_RECORDS)} reports"
-    assert app.title[0].value == config.APP_NAME
+    assert app.title[0].value == config.APP_HEADLINE
 
 
 def test_home_has_a_disclaimer_and_add_button(app):
@@ -124,6 +124,110 @@ def test_show_more_pages_through_results(tmp_path):
     assert len(opened) == config.PAGE_SIZE * 2
 
 
+def test_map_has_a_tile_for_every_state(app):
+    tiles = [b for b in app.button if str(b.key).startswith("state_")]
+    assert len(tiles) == len(config.STATE_TILES)
+
+
+def test_map_tile_filters_and_a_second_tap_clears(app):
+    button(app, "state_ID").click().run()
+    assert report_count(app) == "2 reports"
+    assert app.selectbox(key="f_state").value == "Idaho"
+    button(app, "state_ID").click().run()
+    assert report_count(app) == f"{len(SAMPLE_RECORDS)} reports"
+    assert app.selectbox(key="f_state").value is None
+
+
+def test_map_tile_with_no_reports_can_be_chosen(app):
+    button(app, "state_NE").click().run()
+    assert not app.exception
+    assert app.selectbox(key="f_state").value == "Nebraska"
+
+
+def test_map_tile_clears_a_city_from_another_state(app):
+    app.selectbox(key="f_state").select("Texas").run()
+    app.selectbox(key="f_city").select("Port Aransas").run()
+    button(app, "state_ID").click().run()
+    assert app.selectbox(key="f_city").value is None
+
+
+def test_summary_explains_multiple_state_records(app):
+    button(app, "state_ID").click().run()
+    assert any("1 in Idaho, 1 across several states" in block.value for block in app.html)
+
+
+def test_map_counts_follow_other_filters(app):
+    assert button(app, "state_ID").label.strip() == "**ID** 1"
+    app.text_input(key="f_query").input("pat's").run()
+    assert button(app, "state_ID").label.strip() == "**ID**"
+    assert button(app, "state_NJ").label.strip() == "**NJ** 1"
+
+
+def test_filter_chip_clears_its_filter(app):
+    app.selectbox(key="f_state").select("Idaho").run()
+    assert button(app, "chip_state").label == "Idaho"
+    button(app, "chip_state").click().run()
+    assert report_count(app) == f"{len(SAMPLE_RECORDS)} reports"
+
+
+def test_topic_chip_removes_only_that_topic(app):
+    app.button_group(key="f_topics").set_value(["Overtime", "Second job"]).run()
+    assert app.info[0].value == "No reports match your search."
+    button(app, "chip_topic_Second job").click().run()
+    assert app.button_group(key="f_topics").value == ["Overtime"]
+    assert report_count(app) == "1 report"
+
+
+def test_experience_filter_counts_and_chip(app):
+    pills = app.button_group(key="f_experience")
+    assert any("Jobs to Avoid list 4" in option.content for option in pills.proto.options)
+    pills.set_value(["bad"]).run()
+    assert report_count(app) == "1 report"
+    button(app, "chip_experience_bad").click().run()
+    assert app.button_group(key="f_experience").value == []
+    assert report_count(app) == f"{len(SAMPLE_RECORDS)} reports"
+
+
+def test_experience_counts_ignore_their_own_selection(app):
+    app.button_group(key="f_experience").set_value(["bad"]).run()
+    options = app.button_group(key="f_experience").proto.options
+    assert any("Jobs to Avoid list 4" in option.content for option in options)
+
+
+def test_clear_all_removes_every_filter(app):
+    app.selectbox(key="f_state").select("Idaho").run()
+    app.text_input(key="f_query").input("lodge").run()
+    button(app, "clear_all").click().run()
+    assert report_count(app) == f"{len(SAMPLE_RECORDS)} reports"
+    assert app.text_input(key="f_query").value == ""
+
+
+def test_topic_selection_survives_its_count_changing(app):
+    app.button_group(key="f_topics").set_value(["Overtime"]).run()
+    app.text_input(key="f_query").input("marketplace").run()
+    assert app.button_group(key="f_topics").value == ["Overtime"]
+    assert report_count(app) == "1 report"
+
+
+def test_searched_text_stays_out_of_button_labels(app):
+    app.text_input(key="f_query").input("$12 **taxi**").run()
+    assert not app.exception
+    assert button(app, "chip_query").label == "Search"
+
+
+def test_full_report_includes_others_under_the_same_name(tmp_path):
+    rows = [
+        record("T-0001", "Acme Hotel"),
+        record("T-0002", "ACME hotel", report_description="Another account of the place"),
+    ]
+    path = tmp_path / "same_name.csv"
+    path.write_text(to_csv(rows), encoding="utf-8")
+    app = open_app(str(path))
+    button(app, "open_T-0001").click().run()
+    assert not app.exception
+    assert "Reference: T-0002" in captions(app)
+
+
 def test_failed_source_with_no_copy_shows_friendly_error(tmp_path):
     app = open_app(str(tmp_path / "missing.csv"))
     assert not app.exception
@@ -166,6 +270,7 @@ def key_of(app, suffix):
 
 def fill_report(app):
     app.button_group(key=key_of(app, "type")).set_value("report").run()
+    app.button_group(key=key_of(app, "overall")).set_value("bad").run()
     app.selectbox(key=key_of(app, "name")).set_value("Pine Lodge").run()
     app.selectbox(key=key_of(app, "state")).set_value("Florida").run()
     app.text_area(key=key_of(app, "details")).input("Hours were cut every single week.").run()
@@ -174,6 +279,28 @@ def fill_report(app):
 
 def test_form_starts_with_only_the_first_question(form):
     assert not form.selectbox
+
+
+def page_html(app):
+    return " ".join(block.value for block in app.html)
+
+
+def test_preview_shows_masking_before_anything_is_sent(form):
+    form.button_group(key=key_of(form, "type")).set_value("report").run()
+    assert "Your words will appear here." in page_html(form)
+    form.text_area(key=key_of(form, "details")).input("Call the boss on 876 555 0199 about hours.").run()
+    assert "[number removed]" in page_html(form)
+    assert "876 555 0199" not in page_html(form)
+
+
+def test_still_needed_list_shrinks_as_fields_are_filled(form):
+    form.button_group(key=key_of(form, "type")).set_value("report").run()
+    assert "Enter the employer or agency name." in page_html(form)
+    form.selectbox(key=key_of(form, "name")).set_value("Pine Lodge").run()
+    assert "Enter the employer or agency name." not in page_html(form)
+    assert "Ready to publish." not in page_html(form)
+    fill_report(form)
+    assert "Ready to publish." in page_html(form)
 
 
 def test_form_stops_when_required_fields_are_missing(form):
@@ -212,6 +339,48 @@ def test_job_opportunity_hides_stars(form):
     form.button_group(key=key_of(form, "type")).set_value("job_opportunity").run()
     assert form.text_input(key=key_of(form, "pay")) is not None
     assert not any(m.value == "Pay" for m in form.markdown)
+    assert "Choose good, neutral or bad." not in page_html(form)
+
+
+def chips_on_offer(app, overall):
+    options = app.button_group(key=key_of(app, f"chips_{overall}")).proto.options
+    return [option.content for option in options]
+
+
+@pytest.mark.parametrize("overall, shown, hidden", [
+    ("good", "Good pay", "Low pay"),
+    ("bad", "Low pay", "Good pay"),
+])
+def test_chips_follow_the_rating(form, overall, shown, hidden):
+    form.button_group(key=key_of(form, "type")).set_value("review").run()
+    form.button_group(key=key_of(form, "overall")).set_value(overall).run()
+    assert not form.exception
+    assert shown in chips_on_offer(form, overall)
+    assert hidden not in chips_on_offer(form, overall)
+
+
+def test_neutral_offers_both_kinds_of_chip(form):
+    form.button_group(key=key_of(form, "type")).set_value("review").run()
+    form.button_group(key=key_of(form, "overall")).set_value("neutral").run()
+    assert {"Good pay", "Low pay"} <= set(chips_on_offer(form, "neutral"))
+
+
+def test_chips_tapped_for_a_bad_review_do_not_carry_over_to_a_good_one(form):
+    form.button_group(key=key_of(form, "type")).set_value("review").run()
+    form.button_group(key=key_of(form, "overall")).set_value("bad").run()
+    form.button_group(key=key_of(form, "chips_bad")).set_value(["Low pay"]).run()
+    form.button_group(key=key_of(form, "overall")).set_value("good").run()
+    assert not form.exception
+    assert form.button_group(key=key_of(form, "chips_good")).value == []
+    assert "Low pay" not in page_html(form)
+
+
+def test_preview_shows_the_chosen_rating(form):
+    form.button_group(key=key_of(form, "type")).set_value("review").run()
+    assert "Choose good, neutral or bad." in page_html(form)
+    form.button_group(key=key_of(form, "overall")).set_value("good").run()
+    assert "Good experience" in page_html(form)
+    assert "Choose good, neutral or bad." not in page_html(form)
 
 
 def test_successful_submission_confirms_and_resets(form, monkeypatch):
@@ -230,6 +399,7 @@ def test_successful_submission_confirms_and_resets(form, monkeypatch):
     assert not form.exception
     assert "will appear in about 10 minutes" in form.success[0].value
     assert sent[0]["public"]["employer_name"] == "Pine Lodge"
+    assert sent[0]["public"]["ratings"] == "Overall=bad"
     assert sent[0]["token"] == "test-token"
     assert form.session_state["form_version"] == 1
 

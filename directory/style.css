@@ -1,63 +1,417 @@
-@media (max-width: 640px) {
-  h1 {
-    font-size: 1.7rem !important;
-    line-height: 1.2 !important;
-  }
+:root {
+  --ink: #16241f;
+  --muted: #55645d;
+  --forest: #0c3b2e;
+  --green: #0b6e4f;
+  --gold: #f6b93b;
+  --gold-deep: #e8a81f;
+  --paper: #f6f4ec;
+  --card: #ffffff;
+  --line: #e2dfd0;
+  --on-forest: #cfe3da;
+  --shadow: 0 10px 26px rgba(12, 59, 46, 0.13);
+  --heading: "Bricolage Grotesque", Figtree, sans-serif;
 
-  [data-testid="stMainBlockContainer"] {
-    padding-top: 3.5rem;
-  }
+  --tile-0: #efece0;
+  --tile-0-ink: #5f665d;
+  --tile-1: #cfe5d9;
+  --tile-1-ink: #0b5a41;
+  --tile-2: #8cc4ab;
+  --tile-2-ink: #0a3d2e;
+  --tile-3: #1c7f5b;
+  --tile-3-ink: #ffffff;
+  --tile-4: #0b5a41;
+  --tile-4-ink: #ffffff;
+  --tile-selected: var(--gold);
+  --tile-selected-ink: var(--ink);
+}
+
+/* Page frame */
+
+[data-testid="stMainBlockContainer"] {
+  max-width: 1240px;
+  padding: 3.75rem 2.5rem 3rem;
+}
+
+[data-testid="stHeader"] {
+  background: var(--forest);
+}
+
+[data-testid="stHeader"] a,
+[data-testid="stHeader"] button,
+[data-testid="stHeader"] span,
+[data-testid="stHeader"] p {
+  color: var(--on-forest);
+}
+
+[data-testid="InputInstructions"],
+.st-key-scripts {
+  display: none;
+}
+
+/* Streamlit fades captions, which is too faint for the disclaimer and counts. */
+[data-testid="stCaptionContainer"] {
+  opacity: 1;
+}
+
+[data-testid="stCaptionContainer"] p {
+  color: var(--muted);
+}
+
+/* Hero and page bands. The shadow and clip paint the band edge to edge. */
+
+.st-key-hero,
+.st-key-band {
+  background: var(--forest);
+  box-shadow: 0 0 0 100vmax var(--forest);
+  clip-path: inset(0 -100vmax -1px);
+  color: #ffffff;
+  margin-bottom: 1.25rem;
+  margin-top: -1rem;
+  padding: 2.25rem 0 2rem;
+}
+
+.st-key-band {
+  padding: 1.75rem 0 1.5rem;
+}
+
+.st-key-hero h1,
+.st-key-band h1 {
+  color: #ffffff;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  padding: 0 0 0.5rem;
+}
+
+.st-key-hero h1 {
+  font-size: clamp(2.2rem, 5vw, 3.75rem);
+}
+
+.st-key-band h1 {
+  font-size: clamp(1.8rem, 4vw, 2.75rem);
+}
+
+.st-key-hero p,
+.st-key-band p {
+  color: var(--on-forest);
+}
+
+.eyebrow {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.st-key-hero .eyebrow {
+  color: var(--gold);
+}
+
+.st-key-hero [data-testid="stTextInputRootElement"] {
+  background: #ffffff;
+  border: 0;
+  border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  height: 3.5rem;
+}
+
+.st-key-hero input {
+  color: var(--ink);
+  font-size: 1.1rem;
+}
+
+.st-key-hero_row {
+  align-items: center;
+  gap: 1.5rem;
+  justify-content: space-between;
+}
+
+.stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 2.25rem;
+}
+
+.stats div {
+  color: var(--on-forest);
+  font-size: 0.9rem;
+}
+
+.stats strong {
+  color: #ffffff;
+  display: block;
+  font: 800 1.75rem/1.1 var(--heading);
+}
+
+.st-key-add_top button {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: var(--ink);
+  font-weight: 700;
+  padding: 0.6rem 1.25rem;
+}
+
+.st-key-add_top button:hover,
+.st-key-add_top button:focus-visible,
+.st-key-add_top button:active {
+  background: var(--gold-deep);
+  border-color: var(--gold-deep);
+  color: var(--ink);
+}
+
+.st-key-add_top button p {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.st-key-hero [data-testid="stCaptionContainer"],
+.st-key-hero [data-testid="stCaptionContainer"] p {
+  color: var(--on-forest);
+  font-size: 0.82rem;
+}
+
+/* Left rail */
+
+.st-key-rail {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  max-height: calc(100vh - 5rem);
+  overflow-y: auto;
+  padding: 1rem 1.1rem;
+}
+
+/* Streamlit wraps a keyed container in a box of the same height, so the sticky
+   rule goes on the wrapper. On the container itself it has no room to move. */
+[data-testid="stLayoutWrapper"]:has(> .st-key-rail),
+[data-testid="stLayoutWrapper"]:has(> .st-key-preview),
+[data-testid="stLayoutWrapper"]:has(> .st-key-next_steps) {
+  position: sticky;
+  top: 4.25rem;
+}
+
+.st-key-rail h3,
+.st-key-preview h3 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  padding: 0 0 0.75rem;
+}
+
+/* State tile map */
+
+.st-key-state_map {
+  display: grid;
+  gap: 3px;
+  grid-template-columns: repeat(11, minmax(0, 1fr));
+  grid-template-rows: repeat(8, auto);
+}
+
+.st-key-state_map [data-testid="stElementContainer"] {
+  min-width: 0;
+  width: auto;
+}
+
+.st-key-state_map [data-testid="stButton"],
+.st-key-state_map [data-testid="stTooltipHoverTarget"] {
+  width: 100%;
+}
+
+.st-key-state_map button,
+.st-key-state_map button:hover,
+.st-key-state_map button:focus,
+.st-key-state_map button:active {
+  aspect-ratio: 1;
+  background: var(--tile);
+  border: 0;
+  border-radius: 6px;
+  color: var(--tile-ink);
+  min-height: 0;
+  padding: 0;
+  width: 100%;
+}
+
+.st-key-state_map button {
+  transition: transform 0.12s;
+}
+
+.st-key-state_map button:hover {
+  box-shadow: 0 3px 8px rgba(12, 59, 46, 0.3);
+  transform: scale(1.14);
+}
+
+.st-key-state_map button p {
+  color: inherit;
+  font-size: 0.56rem;
+  line-height: 1;
+}
+
+.st-key-state_map button strong {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+/* Results */
+
+.st-key-results_head [data-testid="stCaptionContainer"] p {
+  color: var(--ink);
+  font: 800 1.6rem/1.15 var(--heading);
+}
+
+.results-note {
+  color: var(--muted);
+  font-size: 0.92rem;
+  margin: -0.4rem 0 0;
+}
+
+.st-key-filter_chips {
+  align-items: center;
+  gap: 0.4rem;
+}
+
+[class*="st-key-chip_"] button {
+  background: #eaf3ee;
+  border: 0;
+  border-radius: 999px;
+  color: #0b5a41;
+  min-height: 0;
+  padding: 0.2rem 0.7rem;
+}
+
+[class*="st-key-chip_"] button:hover {
+  background: #cfe5d9;
+  color: #0b5a41;
+}
+
+[class*="st-key-chip_"] button p {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+/* Report cards. The invisible button covers the card, so all of it responds. */
+
+[class*="st-key-card_"] {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  gap: 0;
+  padding: 1rem 1.15rem;
+  position: relative;
+  transition: transform 0.14s, box-shadow 0.14s, border-color 0.14s;
+}
+
+[class*="st-key-card_"]:hover {
+  border-color: var(--green);
+  box-shadow: var(--shadow);
+  transform: translateY(-2px);
+}
+
+[class*="st-key-card_"]:focus-within {
+  outline: 3px solid var(--gold-deep);
+  outline-offset: 2px;
+}
+
+[class*="st-key-open_"] {
+  inset: 0;
+  position: absolute;
+  width: 100%;
+  z-index: 1;
+}
+
+[class*="st-key-open_"] div,
+[class*="st-key-open_"] button {
+  height: 100%;
+  width: 100%;
+}
+
+[class*="st-key-open_"] button {
+  cursor: pointer;
+  opacity: 0;
 }
 
 .record h3 {
-  font-size: 1.1rem;
-  font-weight: 600;
-  line-height: 1.3;
+  font: 700 1.15rem/1.25 var(--heading);
   margin: 0;
-  padding: 0;
   overflow-wrap: anywhere;
+  padding: 0;
 }
 
 .record-head {
+  align-items: flex-start;
   display: flex;
   flex-wrap: wrap;
   gap: 0.4rem 0.75rem;
-  align-items: center;
   justify-content: space-between;
 }
 
 .record .meta {
-  color: #4a5560;
-  font-size: 0.9rem;
-  margin: 0.3rem 0 0.5rem;
+  color: var(--muted);
+  font-size: 0.88rem;
+  margin: 0.2rem 0 0.5rem;
 }
 
 .record .excerpt,
 .record .full-text p {
-  line-height: 1.55;
+  line-height: 1.5;
   margin: 0 0 0.6rem;
   overflow-wrap: anywhere;
 }
 
 .record .footnote {
-  color: #4a5560;
+  color: var(--muted);
   font-size: 0.8rem;
-  margin: 0;
+  margin: 0.5rem 0 0;
 }
 
 .record .explanation {
-  background: #eef1f2;
-  border-radius: 0.4rem;
-  color: #33404a;
+  background: #eaf3ee;
+  border-radius: 0.5rem;
+  color: #27423a;
   font-size: 0.85rem;
   margin: 0.75rem 0 0;
   padding: 0.6rem 0.75rem;
 }
 
+.card-prompt {
+  color: var(--green);
+  font-size: 0.85rem;
+  font-weight: 700;
+  margin: 0.55rem 0 0;
+}
+
+.card-prompt::after {
+  content: " \2192";
+  display: inline-block;
+  margin-left: 0.15rem;
+  transition: transform 0.14s;
+}
+
+[class*="st-key-card_"]:hover .card-prompt::after {
+  transform: translateX(3px);
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.tag {
+  background: #eaf3ee;
+  border-radius: 999px;
+  color: #0b5a41;
+  font-size: 0.73rem;
+  font-weight: 600;
+  padding: 0.12rem 0.55rem;
+}
+
 .badge {
   border-radius: 999px;
-  font-size: 0.75rem;
-  font-weight: 600;
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 700;
   padding: 0.15rem 0.6rem;
   white-space: nowrap;
 }
@@ -66,6 +420,14 @@
 .badge-multiple_reports { background: #fbecd2; color: #6b4300; }
 .badge-verified { background: #dcefe2; color: #1c5232; }
 .badge-unverified { background: #ececec; color: #454545; }
+
+.record .experience {
+  margin: 0 0 0.45rem;
+}
+
+.badge-good { background: #dcefe2; color: #1c5232; }
+.badge-neutral { background: #ececec; color: #454545; }
+.badge-bad { background: #fae1dc; color: #8a2a17; }
 
 .ratings {
   display: flex;
@@ -83,3 +445,209 @@
 
 .rating-name { color: #33404a; }
 .rating-stars { color: #8a5a00; letter-spacing: 0.05em; }
+
+.st-key-empty_panel {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 1.25rem;
+}
+
+/* Add information form */
+
+.st-key-type_picker [data-testid="stWidgetLabel"] p {
+  font: 700 1.2rem var(--heading);
+}
+
+.st-key-type_picker button {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  flex: 1 1 11rem;
+  min-height: 5.5rem;
+  transition: transform 0.14s, box-shadow 0.14s, border-color 0.14s;
+}
+
+.st-key-type_picker button:hover {
+  border-color: var(--green);
+  box-shadow: var(--shadow);
+  transform: translateY(-2px);
+}
+
+.st-key-type_picker button p,
+.st-key-type_picker button span {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.st-key-step_job,
+.st-key-step_detail,
+.st-key-step_words {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 1.1rem 1.25rem 1.25rem;
+}
+
+.step-heading {
+  align-items: center;
+  display: flex;
+  font: 700 1.2rem var(--heading);
+  gap: 0.6rem;
+  margin: 0;
+  padding: 0;
+}
+
+.step-heading span {
+  align-items: center;
+  background: var(--forest);
+  border-radius: 999px;
+  color: #ffffff;
+  display: inline-flex;
+  font-size: 0.85rem;
+  height: 1.7rem;
+  justify-content: center;
+  width: 1.7rem;
+}
+
+.st-key-preview {
+  background: #eef3ea;
+  border: 1px dashed #b7cbb9;
+  border-radius: 18px;
+  padding: 1rem 1.1rem;
+}
+
+.st-key-preview .record {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 0.9rem 1rem;
+}
+
+.still-needed h4 {
+  font: 700 0.95rem var(--heading);
+  margin: 0 0 0.25rem;
+  padding: 0;
+}
+
+.still-needed ul {
+  color: var(--muted);
+  font-size: 0.88rem;
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.ready {
+  color: var(--green);
+  font-weight: 700;
+  margin: 0;
+}
+
+/* Information pages */
+
+.tiles {
+  display: grid;
+  gap: 0.85rem;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+}
+
+.tile {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 1rem 1.1rem;
+}
+
+.tile h3 {
+  font: 700 1.05rem/1.25 var(--heading);
+  margin: 0 0 0.3rem;
+  padding: 0;
+}
+
+.tile p {
+  color: var(--muted);
+  font-size: 0.93rem;
+  line-height: 1.5;
+  margin: 0.4rem 0 0;
+}
+
+.tile-number {
+  color: var(--gold-deep);
+  display: block;
+  font: 800 1.6rem/1 var(--heading);
+  margin-bottom: 0.35rem;
+}
+
+/* Keyboard focus and reduced motion */
+
+button:focus-visible,
+a:focus-visible {
+  outline: 3px solid var(--gold-deep);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+  }
+
+  [class*="st-key-card_"]:hover,
+  .st-key-state_map button:hover,
+  .st-key-type_picker button:hover {
+    transform: none;
+  }
+}
+
+/* Phones */
+
+@media (max-width: 640px) {
+  [data-testid="stMainBlockContainer"] {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .st-key-hero,
+  .st-key-band {
+    padding-top: 1.5rem;
+  }
+
+  .st-key-hero_row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  [data-testid="stLayoutWrapper"]:has(> .st-key-rail),
+  [data-testid="stLayoutWrapper"]:has(> .st-key-preview),
+  [data-testid="stLayoutWrapper"]:has(> .st-key-next_steps) {
+    position: static;
+  }
+
+  .st-key-rail {
+    max-height: none;
+    overflow-y: visible;
+  }
+
+  /* One scrolling row keeps results close to the search box. Running it to the
+     panel's edge lets the next pill peek out, which shows that it scrolls. */
+  .st-key-f_experience [data-testid="stButtonGroup"] > div,
+  .st-key-f_topics [data-testid="stButtonGroup"] > div {
+    flex-wrap: nowrap;
+    margin-right: -1.1rem;
+    overflow-x: auto;
+    padding-right: 1.1rem;
+    scrollbar-width: none;
+  }
+
+  .st-key-f_experience button,
+  .st-key-f_topics button {
+    flex: none;
+  }
+
+  .st-key-state_map button p {
+    font-size: 0;
+  }
+
+  .st-key-state_map button strong {
+    font-size: 0.62rem;
+  }
+}
