@@ -277,10 +277,11 @@ def test_full_report_says_a_rating_is_the_writers_view(row):
     assert "isn&#x27;t the directory&#x27;s view" in render.detail_html(row)
 
 
-def test_card_shows_review_note_only_when_unreviewed(row):
+@pytest.mark.parametrize("state", ["reviewed", "unreviewed"])
+def test_review_state_stays_off_the_page(row, state):
+    row["review_state"] = state
     assert "Not yet reviewed" not in render.card_html(row)
-    row["review_state"] = "unreviewed"
-    assert "Not yet reviewed" in render.card_html(row)
+    assert "Not yet reviewed" not in render.detail_html(row)
 
 
 def test_missing_date_shows_only_in_the_full_report(row):

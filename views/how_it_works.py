@@ -9,10 +9,7 @@ STEPS = [
         "have experience with employers and agencies.",
     ),
     ("It goes live", "New reports go live automatically."),
-    (
-        "Moderators read it",
-        "A report marked \"Not yet reviewed by a moderator\" hasn't been read yet.",
-    ),
+    ("Moderators read it", "Moderators read new reports after they go live."),
     ("It can be changed", "Moderators can correct or remove a report."),
 ]
 

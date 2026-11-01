@@ -456,6 +456,7 @@ def test_how_it_works_only_explains_badges_in_use(app):
     assert "Independently verified" in page_html(app)
     assert "Community-reported" not in page_html(app)
     assert "Not verified" not in page_html(app)
+    assert "Not yet reviewed" not in page_html(app)
 
 
 def test_correction_needs_a_problem_and_contact(app):

@@ -93,8 +93,6 @@ def footnote_html(record, show_missing_date: bool = True) -> str:
         parts.append(date_text(record))
     if record["experience_period"]:
         parts.append(f"Experience: {record['experience_period']}")
-    if record["review_state"] != "reviewed":
-        parts.append("Not yet reviewed by a moderator")
     if not parts:
         return ""
     text = " · ".join(html.escape(part) for part in parts)
