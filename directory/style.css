@@ -44,6 +44,11 @@
   color: var(--on-forest);
 }
 
+/* Streamlit adds Fork and GitHub buttons to apps with public repos. */
+[data-testid="stToolbarActions"] {
+  display: none !important;
+}
+
 [data-testid="InputInstructions"],
 .st-key-scripts {
   display: none;
